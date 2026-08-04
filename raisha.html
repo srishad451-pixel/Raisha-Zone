@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raisha Zone — মডারেটর প্যানেল</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0f1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-card-hover: #1f2a40;
+            --pink: #ec4899;
+            --pink-light: #f472b6;
+            --pink-glow: rgba(236, 72, 153, 0.15);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2a3550;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Noto Sans Bengali', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .bg-grid {
+            position:fixed; inset:0;
+            background-image:
+                linear-gradient(rgba(236,72,153,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(236,72,153,0.025) 1px, transparent 1px);
+            background-size:60px 60px;
+            pointer-events:none; z-index:0;
+        }
+        .bg-glow-1 {
+            position:fixed; width:500px; height:500px; border-radius:50%;
+            background:radial-gradient(circle, rgba(236,72,153,0.06) 0%, transparent 70%);
+            top:-100px; right:-100px; pointer-events:none; z-index:0;
+            animation:floatG 12s ease-in-out infinite;
+        }
+        .bg-glow-2 {
+            position:fixed; width:400px; height:400px; border-radius:50%;
+            background:radial-gradient(circle, rgba(168,85,247,0.04) 0%, transparent 70%);
+            bottom:-50px; left:-50px; pointer-events:none; z-index:0;
+            animation:floatG 15s ease-in-out infinite reverse;
+        }
+        @keyframes floatG {
+            0%,100%{transform:translate(0,0) scale(1)}
+            50%{transform:translate(30px,20px) scale(1.1)}
+        }
+
+        .login-screen {
+            position:fixed; inset:0; z-index:999;
+            background:var(--bg-primary);
+            display:flex; align-items:center; justify-content:center;
+            padding:20px;
+        }
+        .login-screen.hidden { display:none; }
+        .login-box {
+            background:var(--bg-card); border:1px solid var(--border);
+            border-radius:20px; padding:40px 36px; width:100%; max-width:420px;
+            text-align:center; position:relative;
+            animation:cardIn .6s ease both;
+        }
+        @keyframes cardIn { from{opacity:0;transform:translateY(30px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .login-logo { margin-bottom:28px; }
+        .login-logo .brand-name {
+            font-family:'Poppins',sans-serif; font-size:32px; font-weight:900; letter-spacing:-0.5px;
+        }
+        .login-logo .brand-name .bp { color:var(--pink); }
+        .login-logo .brand-name .bz { color:#cbd5e1; }
+        .login-logo p { color:var(--text-muted); font-size:13px; margin-top:6px; }
+        .login-field { margin-bottom:16px; text-align:left; }
+        .login-field label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; }
+        .login-field input, .login-field select {
+            width:100%; padding:12px 16px; background:var(--bg-secondary);
+            border:1px solid var(--border); border-radius:10px;
+            color:var(--text-primary); font-family:inherit; font-size:14px; outline:none;
+            transition:all .3s ease;
+        }
+        .login-field input:focus, .login-field select:focus { border-color:var(--pink); box-shadow:0 0 0 3px var(--pink-glow); }
+        .login-field select option { background:var(--bg-secondary); color:var(--text-primary); }
+        .login-btn {
+            width:100%; padding:13px; border:none; border-radius:10px;
+            font-family:inherit; font-size:15px; font-weight:700; cursor:pointer;
+            transition:all .3s ease; margin-top:8px;
+        }
+        .login-btn-admin { background:linear-gradient(135deg, var(--pink), #a855f7); color:white; }
+        .login-btn-admin:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(236,72,153,0.35); }
+        .login-error { color:var(--danger); font-size:13px; margin-top:12px; display:none; }
+        .login-footer { margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
+        .login-footer p { font-size:11px; color:var(--text-muted); line-height:1.6; }
+        .login-footer i { color:var(--pink); margin-right:4px; }
+
+        .app-header {
+            position:sticky; top:0; z-index:50;
+            background:rgba(10,15,26,0.88); backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px); border-bottom:1px solid var(--border);
+        }
+        .header-inner {
+            max-width:1400px; margin:0 auto; padding:14px 24px;
+            display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+        }
+        .logo-section { display:flex; align-items:center; gap:12px; }
+        .logo-img {
+            width:44px; height:44px; border-radius:10px; object-fit:cover;
+            border:2px solid rgba(236,72,153,0.3);
+        }
+        .logo-text .brand-name { font-family:'Poppins',sans-serif; font-size:22px; font-weight:900; line-height:1; }
+        .logo-text .brand-name .bp { color:var(--pink); }
+        .logo-text .brand-name .bz { color:#cbd5e1; }
+        .logo-text span { font-size:11px; color:var(--text-muted); display:block; margin-top:3px; }
+        .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .role-badge {
+            display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+            border-radius:20px; font-size:12px; font-weight:600; letter-spacing:.3px;
+        }
+        .role-badge.admin { background:rgba(236,72,153,0.12); border:1px solid rgba(236,72,153,0.3); color:var(--pink-light); }
+        .role-badge.mod { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); color:#fbbf24; }
+        .logout-btn {
+            padding:7px 16px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2);
+            border-radius:8px; color:#f87171; font-family:inherit; font-size:12px; font-weight:600;
+            cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s ease;
+        }
+        .logout-btn:hover { background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.4); }
+
+        .controls-bar {
+            max-width:1400px; margin:0 auto; padding:20px 24px;
+            display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+            position:relative; z-index:1;
+        }
+        .search-box { flex:1; min-width:220px; position:relative; }
+        .search-box i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px; }
+        .search-box input {
+            width:100%; padding:11px 16px 11px 40px; background:var(--bg-card);
+            border:1px solid var(--border); border-radius:10px; color:var(--text-primary);
+            font-family:inherit; font-size:14px; outline:none; transition:all .3s ease;
+        }
+        .search-box input::placeholder { color:var(--text-muted); }
+        .search-box input:focus { border-color:var(--pink); box-shadow:0 0 0 3px var(--pink-glow); }
+        .ctrl-btn {
+            padding:11px 18px; background:var(--bg-card); border:1px solid var(--border);
+            border-radius:10px; color:var(--text-secondary); font-family:inherit;
+            font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px;
+            transition:all .3s ease; white-space:nowrap;
+        }
+        .ctrl-btn:hover { border-color:var(--pink); color:var(--pink); }
+        .ctrl-btn.active { background:var(--pink-glow); border-color:rgba(236,72,153,0.3); color:var(--pink); }
+        .add-btn {
+            padding:11px 20px; background:linear-gradient(135deg, var(--pink), #a855f7);
+            border:none; border-radius:10px; color:white; font-family:inherit;
+            font-size:13px; font-weight:700; cursor:pointer; display:flex;
+            align-items:center; gap:8px; transition:all .3s ease; white-space:nowrap;
+        }
+        .add-btn:hover { transform:translateY(-2px); box-shadow:0 6px 25px rgba(236,72,153,0.35); }
+        .view-toggle { display:flex; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+        .view-toggle button { padding:10px 14px; background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; transition:all .3s ease; }
+        .view-toggle button.active { background:var(--pink-glow); color:var(--pink); }
+        .view-toggle button:hover:not(.active) { color:var(--text-secondary); }
+
+        .products-section { max-width:1400px; margin:0 auto; padding:0 24px 40px; position:relative; z-index:1; }
+        .products-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px; }
+        .products-grid.list-view { grid-template-columns:1fr; }
+        .product-card {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+            overflow:hidden; transition:all .4s cubic-bezier(.25,.46,.45,.94);
+            position:relative; animation:cardIn .5s ease both;
+        }
+        .product-card:hover { border-color:rgba(236,72,153,0.3); transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.3); }
+        .card-image-wrap { position:relative; width:100%; height:220px; overflow:hidden; background:var(--bg-secondary); }
+        .card-image-wrap img { width:100%; height:100%; object-fit:cover; transition:transform .6s ease; }
+        .product-card:hover .card-image-wrap img { transform:scale(1.05); }
+        .image-overlay {
+            position:absolute; inset:0;
+            background:linear-gradient(to top, rgba(10,15,26,0.75) 0%, transparent 50%);
+            opacity:0; transition:opacity .3s ease;
+            display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; gap:8px; flex-wrap:wrap;
+        }
+        .product-card:hover .image-overlay { opacity:1; }
+        .overlay-btn {
+            padding:8px 14px; border-radius:8px; border:none;
+            font-family:inherit; font-size:11px; font-weight:600; cursor:pointer;
+            display:flex; align-items:center; gap:5px; transition:all .2s ease;
+            transform:translateY(10px); opacity:0;
+        }
+        .product-card:hover .overlay-btn { transform:translateY(0); opacity:1; }
+        .product-card:hover .overlay-btn:nth-child(2) { transition-delay:.04s; }
+        .product-card:hover .overlay-btn:nth-child(3) { transition-delay:.08s; }
+        .btn-dl { background:var(--pink); color:white; }
+        .btn-dl:hover { background:#db2777; transform:translateY(-2px)!important; box-shadow:0 4px 15px rgba(236,72,153,0.4); }
+        .btn-prev { background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); color:white; border:1px solid rgba(255,255,255,0.2); }
+        .btn-prev:hover { background:rgba(255,255,255,0.25); transform:translateY(-2px)!important; }
+        .btn-edit { background:rgba(168,85,247,0.3); color:#c084fc; border:1px solid rgba(168,85,247,0.3); }
+        .btn-edit:hover { background:rgba(168,85,247,0.5); transform:translateY(-2px)!important; }
+        .profit-badge { position:absolute; top:12px; right:12px; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; backdrop-filter:blur(10px); }
+        .profit-badge.profit { background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.3); }
+        .profit-badge.loss { background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+        .card-body { padding:18px 20px; }
+        .card-body h3 { font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:12px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .price-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+        .price-item { background:var(--bg-secondary); border-radius:8px; padding:10px 12px; }
+        .price-item label { display:block; font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
+        .price-item .value { font-size:17px; font-weight:800; }
+        .price-item.selling .value { color:var(--pink-light); }
+        .price-item.buying .value { color:var(--success); }
+        .profit-bar { height:4px; background:var(--bg-secondary); border-radius:4px; overflow:hidden; }
+        .profit-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+        .profit-bar-fill.profit-fill { background:linear-gradient(90deg, var(--success), #34d399); }
+        .profit-bar-fill.loss-fill { background:linear-gradient(90deg, var(--danger), #f87171); }
+        .card-footer { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-top:1px solid var(--border); }
+        .card-footer .id-tag { font-size:11px; color:var(--text-muted); font-family:monospace; }
+        .card-footer .dl-small {
+            padding:6px 14px; background:rgba(236,72,153,0.1); border:1px solid rgba(236,72,153,0.2);
+            border-radius:6px; color:var(--pink-light); font-family:inherit; font-size:11px; font-weight:600;
+            cursor:pointer; display:flex; align-items:center; gap:5px; transition:all .2s ease;
+        }
+        .card-footer .dl-small:hover { background:rgba(236,72,153,0.2); }
+        .list-view .product-card { display:grid; grid-template-columns:200px 1fr; }
+        .list-view .card-image-wrap { height:100%; min-height:180px; }
+        .list-view .card-body h3 { -webkit-line-clamp:1; }
+
+        .modal-backdrop {
+            position:fixed; inset:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(10px);
+            z-index:100; display:none; align-items:center; justify-content:center;
+            padding:30px; cursor:zoom-out; animation:fadeIn .3s ease;
+        }
+        .modal-backdrop.active { display:flex; }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .modal-content { position:relative; max-width:90vw; max-height:85vh; cursor:default; }
+        .modal-content img { max-width:100%; max-height:85vh; border-radius:12px; box-shadow:0 25px 80px rgba(0,0,0,0.5); animation:mZoom .4s cubic-bezier(.25,.46,.45,.94); }
+        @keyframes mZoom { from{transform:scale(.85);opacity:0} to{transform:scale(1);opacity:1} }
+        .modal-close { position:absolute; top:-45px; right:0; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s ease; }
+        .modal-close:hover { background:rgba(255,255,255,0.2); }
+        .modal-dl { position:absolute; bottom:-50px; right:0; padding:10px 20px; background:var(--pink); color:white; border:none; border-radius:8px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all .2s ease; }
+        .modal-dl:hover { background:#db2777; transform:translateY(-2px); box-shadow:0 6px 20px rgba(236,72,153,0.4); }
+
+        .form-modal {
+            position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px);
+            z-index:110; display:none; align-items:center; justify-content:center; padding:20px;
+        }
+        .form-modal.active { display:flex; }
+        .form-box {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:16px;
+            padding:32px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto;
+            animation:mZoom .4s ease;
+        }
+        .form-box h2 { font-size:20px; font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+        .form-box h2 i { color:var(--pink); }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:6px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+        .form-group input { width:100%; padding:11px 14px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:8px; color:var(--text-primary); font-family:inherit; font-size:14px; outline:none; transition:all .3s ease; }
+        .form-group input:focus { border-color:var(--pink); box-shadow:0 0 0 3px var(--pink-glow); }
+        .form-group .img-preview { margin-top:10px; border-radius:8px; overflow:hidden; max-height:160px; }
+        .form-group .img-preview img { width:100%; height:160px; object-fit:cover; display:block; }
+        .form-actions { display:flex; gap:10px; margin-top:24px; }
+        .form-actions button { flex:1; padding:12px; border-radius:8px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s ease; }
+        .btn-save { background:linear-gradient(135deg, var(--pink), #a855f7); border:none; color:white; }
+        .btn-save:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(236,72,153,0.35); }
+        .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+        .btn-cancel:hover { border-color:var(--text-muted); color:var(--text-primary); }
+        .btn-delete-form { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; flex:0 0 auto; padding:12px 18px; }
+        .btn-delete-form:hover { background:rgba(239,68,68,0.3); }
+
+        .confirm-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); z-index:120; display:none; align-items:center; justify-content:center; padding:20px; }
+        .confirm-modal.active { display:flex; }
+        .confirm-box { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:32px; width:100%; max-width:380px; text-align:center; animation:mZoom .4s ease; }
+        .confirm-box .icon-circle { width:60px; height:60px; border-radius:50%; background:rgba(239,68,68,0.12); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:24px; color:var(--danger); }
+        .confirm-box h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+        .confirm-box p { font-size:13px; color:var(--text-muted); margin-bottom:24px; }
+        .confirm-actions { display:flex; gap:10px; }
+        .confirm-actions button { flex:1; padding:12px; border-radius:8px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s ease; }
+        .btn-confirm-del { background:var(--danger); border:none; color:white; }
+        .btn-confirm-del:hover { background:#dc2626; }
+
+        .toast-container { position:fixed; bottom:24px; right:24px; z-index:200; display:flex; flex-direction:column; gap:10px; }
+        .toast { padding:12px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; color:var(--text-primary); font-size:13px; font-family:inherit; display:flex; align-items:center; gap:10px; box-shadow:0 10px 40px rgba(0,0,0,0.4); animation:toastIn .4s ease, toastOut .4s ease 2.6s forwards; backdrop-filter:blur(20px); }
+        @keyframes toastIn { from{transform:translateX(100px);opacity:0} to{transform:translateX(0);opacity:1} }
+        @keyframes toastOut { from{transform:translateX(0);opacity:1} to{transform:translateX(100px);opacity:0} }
+
+        .no-results { grid-column:1/-1; text-align:center; padding:80px 20px; }
+        .no-results i { font-size:48px; color:var(--text-muted); margin-bottom:16px; display:block; }
+        .no-results h3 { font-size:20px; color:var(--text-secondary); margin-bottom:8px; }
+        .no-results p { color:var(--text-muted); font-size:14px; }
+
+        .skeleton-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        .skeleton-img { width:100%; height:220px; background:linear-gradient(110deg,var(--bg-secondary) 8%,#253045 18%,var(--bg-secondary) 33%); background-size:200% 100%; animation:shimmer 1.5s linear infinite; }
+        .skeleton-body { padding:18px 20px; }
+        .skeleton-line { height:14px; border-radius:6px; background:linear-gradient(110deg,var(--bg-secondary) 8%,#253045 18%,var(--bg-secondary) 33%); background-size:200% 100%; animation:shimmer 1.5s linear infinite; margin-bottom:10px; }
+        .skeleton-line.title { width:80%; height:18px; }
+        .skeleton-line.short { width:50%; }
+        @keyframes shimmer { to{background-position-x:-200%} }
+
+        .app-footer { text-align:center; padding:30px 24px; border-top:1px solid var(--border); position:relative; z-index:1; }
+        .app-footer p { font-size:12px; color:var(--text-muted); }
+
+        .pass-wrap { position:relative; }
+        .pass-wrap input { padding-right:44px !important; }
+        .pass-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px; transition:color .2s; }
+        .pass-toggle:hover { color:var(--text-secondary); }
+
+        @media(max-width:768px) {
+            .header-inner,.controls-bar,.products-section { padding-left:16px; padding-right:16px; }
+            .products-grid { grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+            .card-image-wrap { height:180px; }
+            .logo-text .brand-name { font-size:18px; }
+        }
+        @media(max-width:480px) {
+            .products-grid { grid-template-columns:1fr; }
+            .list-view .product-card { grid-template-columns:1fr; }
+        }
+        ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:var(--bg-primary)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+        *{-webkit-user-select:none;user-select:none} input,select{-webkit-user-select:text;user-select:text}
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- ============ লগইন স্ক্রিন ============ -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="brand-name"><span class="bp">Raisha</span> <span class="bz">Zone</span></div>
+                <p>প্যানেলে প্রবেশ করুন</p>
+            </div>
+            <div class="login-field">
+                <label>ভূমিকা নির্বাচন করুন</label>
+                <select id="roleSelect">
+                    <option value="moderator">মডারেটর (শুধু দেখবে)</option>
+                    <option value="admin">অ্যাডমিন (ইডিট করবে)</option>
+                </select>
+            </div>
+            <div class="login-field">
+                <label id="passLabel">পাসওয়ার্ড</label>
+                <div class="pass-wrap">
+                    <input type="password" id="passInput" placeholder="পাসওয়ার্ড দিন..." autocomplete="off">
+                    <button class="pass-toggle" type="button" onclick="togglePassVis()" aria-label="পাসওয়ার্ড টগল">
+                        <i class="fas fa-eye" id="passEyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <button class="login-btn login-btn-admin" onclick="handleLogin()">
+                <i class="fas fa-right-to-bracket"></i> লগ ইন করুন
+            </button>
+            <div class="login-error" id="loginError"><i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!</div>
+            <div class="login-footer">
+                <p><i class="fas fa-shield-halved"></i> পাসওয়ার্ড শুধুমাত্র অনুমোদিত ব্যক্তিদের জন্য</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ মেইন অ্যাপ ============ -->
+    <div id="mainApp" style="display:none">
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="logo-section">
+                    <img src="https://z-cdn-media.chatglm.cn/files/41c3eb0a-f3c7-4c92-903c-7a98553c7c94.jpg?auth_key=1885848587-35baef8f4dff4ed4a7489f468303c391-0-f9cf50ccab21bb4eec900f3a6c01dc99" alt="Raisha Zone" class="logo-img" onerror="this.style.display='none'">
+                    <div class="logo-text">
+                        <div class="brand-name"><span class="bp">Raisha</span> <span class="bz">Zone</span></div>
+                        <span id="headerSubtitle">মডারেটর প্যানেল</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="role-badge" id="roleBadge">
+                        <i class="fas fa-shield-halved"></i>
+                        <span id="roleText">মডারেটর</span>
+                    </div>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-right-from-bracket"></i> লগআউট
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="controls-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন..." autocomplete="off">
+                </div>
+                <button class="ctrl-btn" id="sortPrice" onclick="toggleSort()">
+                    <i class="fas fa-arrow-down-short-wide"></i> দাম অনুযায়ী
+                </button>
+                <button class="ctrl-btn" id="sortProfit" onclick="toggleProfitSort()">
+                    <i class="fas fa-chart-line"></i> লাভ অনুযায়ী
+                </button>
+                <div class="view-toggle">
+                    <button class="active" id="gridBtn" onclick="setView('grid')" aria-label="গ্রিড"><i class="fas fa-th-large"></i></button>
+                    <button id="listBtn" onclick="setView('list')" aria-label="লিস্ট"><i class="fas fa-list"></i></button>
+                </div>
+                <button class="add-btn" id="addBtn" style="display:none" onclick="openAddForm()">
+                    <i class="fas fa-plus"></i> নতুন প্রোডাক্ট
+                </button>
+            </div>
+
+            <section class="products-section">
+                <div class="products-grid" id="productsGrid"></div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p><i class="fas fa-lock" style="color:var(--pink);margin-right:4px"></i> <span id="footerText">মডারেটর ভিউ — কোনো তথ্য পরিবর্তন সম্ভব নয়</span></p>
+        </footer>
+    </div>
+
+    <!-- ============ ইমেজ প্রিভিউ মডাল ============ -->
+    <div class="modal-backdrop" id="imageModal" onclick="closeImgModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeImgModalDirect()"><i class="fas fa-xmark"></i></button>
+            <img id="modalImage" src="" alt="প্রিভিউ">
+            <button class="modal-dl" onclick="downloadModalImg()"><i class="fas fa-download"></i> ছবি ডাউনলোড করুন</button>
+        </div>
+    </div>
+
+    <!-- ============ অ্যাডমিন ফর্ম মডাল ============ -->
+    <div class="form-modal" id="formModal" onclick="closeFormIfBg(event)">
+        <div class="form-box" onclick="event.stopPropagation()">
+            <h2 id="formTitle"><i class="fas fa-plus-circle"></i> নতুন প্রোডাক্ট</h2>
+            <div class="form-group">
+                <label>প্রোডাক্টের নাম</label>
+                <input type="text" id="fName" placeholder="প্রোডাক্টের নাম লিখুন...">
+            </div>
+            <div class="form-group">
+                <label>বিক্রয় দাম (৳)</label>
+                <input type="number" id="fSelling" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>ক্রয় দাম (৳)</label>
+                <input type="number" id="fBuying" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>ছবির লিংক (URL)</label>
+                <input type="text" id="fImage" placeholder="https://example.com/image.jpg" oninput="previewFormImg()">
+                <div class="img-preview" id="fImgPreview" style="display:none"><img id="fImgPrevSrc" src="" alt="প্রিভিউ"></div>
+            </div>
+            <div class="form-group">
+                <label>ক্যাটাগরি</label>
+                <input type="text" id="fCategory" placeholder="যেমন: ইলেক্ট্রনিক্স">
+            </div>
+            <div class="form-actions">
+                <button class="btn-cancel" onclick="closeForm()">বাতিল</button>
+                <button class="btn-delete-form" id="fDelBtn" style="display:none" onclick="confirmDelete()"><i class="fas fa-trash"></i></button>
+                <button class="btn-save" onclick="saveProduct()"><i class="fas fa-check"></i> সেভ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ কনফার্ম মডাল ============ -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-box">
+            <div class="icon-circle"><i class="fas fa-trash-can"></i></div>
+            <h3>প্রোডাক্ট মুছে ফেলবেন?</h3>
+            <p>এই কাজ পূর্বাবস্থায় ফেরানো যাবে না</p>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="closeConfirm()">না</button>
+                <button class="btn-confirm-del" onclick="deleteProduct()"><i class="fas fa-trash"></i> হ্যাঁ, মুছুন</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // =============================================================
+        //  কনফিগারেশন — শুধুমাত্র কোডে পাসওয়ার্ড আছে, পেজে দেখা যাবে না
+        // =============================================================
+        const ADMIN_PASSWORD = 'raisha2024';
+        const MODERATOR_PASSWORD = 'mod1234';
+
+        // =============================================================
+        //  ডিফল্ট প্রোডাক্ট ডেটা
+        // =============================================================
+        const DEFAULT_PRODUCTS = [
+            { id:"PRD-001", name:"ওয়্যারলেস ব্লুটুথ ইয়ারবাডস — নয়েজ ক্যান্সেলিং", sellingPrice:1850, buyingPrice:1100, image:"https://picsum.photos/seed/earbuds2024/600/400.jpg", category:"ইলেক্ট্রনিক্স" },
+            { id:"PRD-002", name:"প্রিমিয়াম লেদার ওয়ালেট — RFID ব্লকিং", sellingPrice:950, buyingPrice:520, image:"https://picsum.photos/seed/wallet2024/600/400.jpg", category:"ফ্যাশন" },
+            { id:"PRD-003", name:"স্মার্ট ফিটনেস ওয়াচ — হার্ট রেট মনিটর", sellingPrice:3200, buyingPrice:1950, image:"https://picsum.photos/seed/smartwatch24/600/400.jpg", category:"ইলেক্ট্রনিক্স" },
+            { id:"PRD-004", name:"অর্গানিক গ্রিন টি — ১০০ টি ব্যাগ", sellingPrice:450, buyingPrice:280, image:"https://picsum.photos/seed/greentea24/600/400.jpg", category:"খাদ্য" },
+            { id:"PRD-005", name:"RGB গেমিং মাউস — ৭টি বাটন", sellingPrice:750, buyingPrice:420, image:"https://picsum.photos/seed/gamingmouse24/600/400.jpg", category:"ইলেক্ট্রনিক্স" },
+            { id:"PRD-006", name:"স্টেইনলেস স্টিল ওয়াটার বোতল — ১ লিটার", sellingPrice:380, buyingPrice:210, image:"https://picsum.photos/seed/waterbottle24/600/400.jpg", category:"লাইফস্টাইল" },
+            { id:"PRD-007", name:"পোর্টেবল ব্লুটুথ স্পিকার — ওয়াটারপ্রুফ", sellingPrice:2100, buyingPrice:1350, image:"https://picsum.photos/seed/speaker2024/600/400.jpg", category:"ইলেক্ট্রনিক্স" },
+            { id:"PRD-008", name:"কটন ক্যাজুয়াল শার্ট — স্লিম ফিট", sellingPrice:680, buyingPrice:390, image:"https://picsum.photos/seed/cottonshirt24/600/400.jpg", category:"ফ্যাশন" },
+            { id:"PRD-009", name:"LED ডেস্ক ল্যাম্প — ৩ ব্রাইটনেস লেভেল", sellingPrice:550, buyingPrice:300, image:"https://picsum.photos/seed/desklamp24/600/400.jpg", category:"হোম" },
+            { id:"PRD-010", name:"মাল্টি-পারপাস ব্যাকপ্যাক — ল্যাপটপ কম্পার্টমেন্ট", sellingPrice:1450, buyingPrice:820, image:"https://picsum.photos/seed/backpack2024/600/400.jpg", category:"লাইফস্টাইল" },
+            { id:"PRD-011", name:"মিনি পোর্টেবল চার্জার — ১০০০০ mAh", sellingPrice:580, buyingPrice:350, image:"https://picsum.photos/seed/charger2024/600/400.jpg", category:"ইলেক্ট্রনিক্স" },
+            { id:"PRD-012", name:"আর্টিফিশিয়াল সাকুরা ফুল — ডেকোরেশন সেট", sellingPrice:420, buyingPrice:180, image:"https://picsum.photos/seed/sakura2024/600/400.jpg", category:"হোম" }
+        ];
+
+        // =============================================================
+        //  স্টেট
+        // =============================================================
+        let currentUser = null;
+        let products = [];
+        let editingId = null;
+        let currentView = 'grid';
+        let sortMode = 'none';
+        let profitSortMode = 'none';
+        let currentModalImage = '';
+
+        // =============================================================
+        //  ইনিশিয়ালাইজ
+        // =============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('raisha_products');
+            if (saved) {
+                try { products = JSON.parse(saved); } catch(e) { products = [...DEFAULT_PRODUCTS]; }
+            } else {
+                products = [...DEFAULT_PRODUCTS];
+            }
+
+            document.getElementById('roleSelect').addEventListener('change', (e) => {
+                const label = document.getElementById('passLabel');
+                label.textContent = e.target.value === 'admin' ? 'অ্যাডমিন পাসওয়ার্ড' : 'মডারেটর পাসওয়ার্ড';
+                document.getElementById('passInput').value = '';
+                document.getElementById('loginError').style.display = 'none';
+            });
+
+            document.getElementById('passInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { closeImgModalDirect(); closeForm(); closeConfirm(); }
+            });
+
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showToast('ডাউনলোড বাটন ব্যবহার করুন', 'fas fa-info-circle', '#3b82f6');
+            });
+
+            document.addEventListener('selectstart', (e) => {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') e.preventDefault();
+            });
+        });
+
+        // =============================================================
+        //  পাসওয়ার্ড ভিজিবিলিটি টগল
+        // =============================================================
+        function togglePassVis() {
+            const input = document.getElementById('passInput');
+            const icon = document.getElementById('passEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // =============================================================
+        //  লগইন / লগআউট
+        // =============================================================
+        function handleLogin() {
+            const role = document.getElementById('roleSelect').value;
+            const pass = document.getElementById('passInput').value;
+
+            if (!pass.trim()) {
+                document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড দিন!';
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+
+            if (role === 'admin') {
+                if (pass !== ADMIN_PASSWORD) {
+                    document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!';
+                    document.getElementById('loginError').style.display = 'block';
+                    document.getElementById('passInput').value = '';
+                    return;
+                }
+            } else {
+                if (pass !== MODERATOR_PASSWORD) {
+                    document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!';
+                    document.getElementById('loginError').style.display = 'block';
+                    document.getElementById('passInput').value = '';
+                    return;
+                }
+            }
+
+            document.getElementById('loginError').style.display = 'none';
+            currentUser = role;
+            enterApp();
+        }
+
+        function enterApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').style.display = 'block';
+
+            const badge = document.getElementById('roleBadge');
+            const roleText = document.getElementById('roleText');
+
+            if (currentUser === 'admin') {
+                badge.className = 'role-badge admin';
+                roleText.textContent = 'অ্যাডমিন';
+                document.getElementById('addBtn').style.display = 'flex';
+                document.getElementById('headerSubtitle').textContent = 'অ্যাডমিন প্যানেল';
+                document.getElementById('footerText').textContent = 'অ্যাডমিন মোড — প্রোডাক্ট যোগ, সম্পাদনা ও মুছে ফেলা সম্ভব';
+            } else {
+                badge.className = 'role-badge mod';
+                roleText.textContent = 'মডারেটর';
+                document.getElementById('addBtn').style.display = 'none';
+                document.getElementById('headerSubtitle').textContent = 'মডারেটর প্যানেল';
+                document.getElementById('footerText').textContent = 'মডারেটর ভিউ — কোনো তথ্য পরিবর্তন সম্ভব নয়';
+            }
+
+            showSkeletons();
+            setTimeout(() => renderProducts(getSortedList(products)), 600);
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('passInput').value = '';
+            document.getElementById('passInput').type = 'password';
+            document.getElementById('passEyeIcon').className = 'fas fa-eye';
+            document.getElementById('searchInput').value = '';
+            sortMode = 'none'; profitSortMode = 'none';
+            document.getElementById('sortPrice').classList.remove('active');
+            document.getElementById('sortProfit').classList.remove('active');
+        }
+
+        // =============================================================
+        //  প্রোডাক্ট রেন্ডার
+        // =============================================================
+        function showSkeletons() {
+            const g = document.getElementById('productsGrid');
+            let h = '';
+            for (let i = 0; i < 6; i++) h += `<div class="skeleton-card"><div class="skeleton-img"></div><div class="skeleton-body"><div class="skeleton-line title"></div><div class="skeleton-line short"></div></div></div>`;
+            g.innerHTML = h;
+        }
+
+        function renderProducts(list) {
+            const g = document.getElementById('productsGrid');
+            if (!list.length) { g.innerHTML = `<div class="no-results"><i class="fas fa-magnifying-glass"></i><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3><p>অন্য কিছু দিয়ে সার্চ করুন</p></div>`; return; }
+
+            const isAdmin = currentUser === 'admin';
+            let h = '';
+            list.forEach((p, i) => {
+                const profit = p.sellingPrice - p.buyingPrice;
+                const pp = ((profit / p.sellingPrice) * 100).toFixed(1);
+                const isP = profit >= 0;
+                const bw = Math.min(Math.abs(pp) * 3, 100);
+
+                h += `<article class="product-card" style="animation-delay:${i * 0.05}s">
+                    <div class="card-image-wrap">
+                        <img src="${escHtml(p.image)}" alt="${escHtml(p.name)}" loading="lazy" onerror="this.src='https://picsum.photos/seed/fb${p.id}/600/400.jpg'">
+                        <span class="profit-badge ${isP ? 'profit' : 'loss'}"><i class="fas fa-${isP ? 'arrow-trend-up' : 'arrow-trend-down'}"></i> ${isP ? '+' : ''}${pp}%</span>
+                        <div class="image-overlay">
+                            <button class="overlay-btn btn-prev" onclick="openImgModal('${escAttr(p.image)}','${escAttr(p.name)}')"><i class="fas fa-expand"></i> বড়</button>
+                            <button class="overlay-btn btn-dl" onclick="downloadImage('${escAttr(p.image)}','${escAttr(p.id)}')"><i class="fas fa-download"></i> ডাউনলোড</button>
+                            ${isAdmin ? `<button class="overlay-btn btn-edit" onclick="openEditForm('${escAttr(p.id)}')"><i class="fas fa-pen"></i> ইডিট</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h3>${escHtml(p.name)}</h3>
+                        <div class="price-grid">
+                            <div class="price-item selling"><label>বিক্রয় দাম</label><div class="value">${fmtPrice(p.sellingPrice)}</div></div>
+                            <div class="price-item buying"><label>ক্রয় দাম</label><div class="value">${fmtPrice(p.buyingPrice)}</div></div>
+                        </div>
+                        <div class="profit-bar"><div class="profit-bar-fill ${isP ? 'profit-fill' : 'loss-fill'}" style="width:${bw}%"></div></div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="id-tag">${escHtml(p.id)} · ${escHtml(p.category || '')}</span>
+                        <button class="dl-small" onclick="downloadImage('${escAttr(p.image)}','${escAttr(p.id)}')"><i class="fas fa-download"></i> ডাউনলোড</button>
+                    </div>
+                </article>`;
+            });
+            g.innerHTML = h;
+        }
+
+        // =============================================================
+        //  সার্চ ও সর্ট
+        // =============================================================
+        function handleSearch(e) {
+            const q = e.target.value.trim().toLowerCase();
+            let list = products;
+            if (q) list = products.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
+            renderProducts(getSortedList(list));
+        }
+
+        function getSortedList(list) {
+            let s = [...list];
+            if (sortMode === 'price-asc') s.sort((a,b) => a.sellingPrice - b.sellingPrice);
+            else if (sortMode === 'price-desc') s.sort((a,b) => b.sellingPrice - a.sellingPrice);
+            if (profitSortMode === 'profit-desc') s.sort((a,b) => (b.sellingPrice-b.buyingPrice)-(a.sellingPrice-a.buyingPrice));
+            else if (profitSortMode === 'profit-asc') s.sort((a,b) => (a.sellingPrice-a.buyingPrice)-(b.sellingPrice-b.buyingPrice));
+            return s;
+        }
+
+        function toggleSort() {
+            const btn = document.getElementById('sortPrice');
+            document.getElementById('sortProfit').classList.remove('active'); profitSortMode = 'none';
+            if (sortMode === 'none') { sortMode='price-asc'; btn.innerHTML='<i class="fas fa-arrow-up-short-wide"></i> দাম কম→বেশি'; btn.classList.add('active'); }
+            else if (sortMode === 'price-asc') { sortMode='price-desc'; btn.innerHTML='<i class="fas fa-arrow-down-wide-short"></i> দাম বেশি→কম'; btn.classList.add('active'); }
+            else { sortMode='none'; btn.innerHTML='<i class="fas fa-arrow-down-short-wide"></i> দাম অনুযায়ী'; btn.classList.remove('active'); }
+            applyFilters();
+        }
+
+        function toggleProfitSort() {
+            const btn = document.getElementById('sortProfit');
+            document.getElementById('sortPrice').classList.remove('active'); sortMode = 'none';
+            if (profitSortMode === 'none') { profitSortMode='profit-desc'; btn.innerHTML='<i class="fas fa-arrow-down-wide-short"></i> লাভ বেশি→কম'; btn.classList.add('active'); }
+            else if (profitSortMode === 'profit-desc') { profitSortMode='profit-asc'; btn.innerHTML='<i class="fas fa-arrow-up-short-wide"></i> লাভ কম→বেশি'; btn.classList.add('active'); }
+            else { profitSortMode='none'; btn.innerHTML='<i class="fas fa-chart-line"></i> লাভ অনুযায়ী'; btn.classList.remove('active'); }
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const q = document.getElementById('searchInput').value.trim().toLowerCase();
+            let list = products;
+            if (q) list = products.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q));
+            renderProducts(getSortedList(list));
+        }
+
+        function setView(mode) {
+            currentView = mode;
+            const g = document.getElementById('productsGrid');
+            if (mode === 'grid') { g.classList.remove('list-view'); document.getElementById('gridBtn').classList.add('active'); document.getElementById('listBtn').classList.remove('active'); }
+            else { g.classList.add('list-view'); document.getElementById('listBtn').classList.add('active'); document.getElementById('gridBtn').classList.remove('active'); }
+        }
+
+        // =============================================================
+        //  অ্যাডমিন — যোগ / ইডিট / ডিলিট
+        // =============================================================
+        function openAddForm() {
+            editingId = null;
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> নতুন প্রোডাক্ট';
+            document.getElementById('fName').value = '';
+            document.getElementById('fSelling').value = '';
+            document.getElementById('fBuying').value = '';
+            document.getElementById('fImage').value = '';
+            document.getElementById('fCategory').value = '';
+            document.getElementById('fImgPreview').style.display = 'none';
+            document.getElementById('fDelBtn').style.display = 'none';
+            document.getElementById('formModal').classList.add('active');
+        }
+
+        function openEditForm(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            editingId = id;
+            document.getElementById('formTitle').innerHTML = '<i class="fas fa-pen-to-square"></i> প্রোডাক্ট সম্পাদনা';
+            document.getElementById('fName').value = p.name;
+            document.getElementById('fSelling').value = p.sellingPrice;
+            document.getElementById('fBuying').value = p.buyingPrice;
+            document.getElementById('fImage').value = p.image;
+            document.getElementById('fCategory').value = p.category || '';
+            previewFormImg();
+            document.getElementById('fDelBtn').style.display = 'flex';
+            document.getElementById('formModal').classList.add('active');
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('fName').value.trim();
+            const selling = parseInt(document.getElementById('fSelling').value) || 0;
+            const buying = parseInt(document.getElementById('fBuying').value) || 0;
+            const image = document.getElementById('fImage').value.trim();
+            const category = document.getElementById('fCategory').value.trim();
+
+            if (!name) { showToast('প্রোডাক্টের নাম দিন', 'fas fa-exclamation-triangle', 'var(--danger)'); return; }
+            if (selling <= 0) { showToast('সঠিক বিক্রয় দাম দিন', 'fas fa-exclamation-triangle', 'var(--danger)'); return; }
+
+            if (editingId) {
+                const idx = products.findIndex(x => x.id === editingId);
+                if (idx > -1) products[idx] = { ...products[idx], name, sellingPrice: selling, buyingPrice: buying, image: image || products[idx].image, category };
+                showToast('প্রোডাক্ট আপডেট হয়েছে', 'fas fa-check-circle', 'var(--success)');
+            } else {
+                const newId = 'PRD-' + String(products.length + 1).padStart(3, '0');
+                products.push({ id: newId, name, sellingPrice: selling, buyingPrice: buying, image: image || `https://picsum.photos/seed/${newId}/600/400.jpg`, category });
+                showToast('নতুন প্রোডাক্ট যোগ হয়েছে', 'fas fa-check-circle', 'var(--success)');
+            }
+
+            saveToStorage(); closeForm(); applyFilters();
+        }
+
+        function confirmDelete() { document.getElementById('confirmModal').classList.add('active'); }
+
+        function deleteProduct() {
+            if (!editingId) return;
+            products = products.filter(x => x.id !== editingId);
+            saveToStorage(); closeConfirm(); closeForm(); applyFilters();
+            showToast('প্রোডাক্ট মুছে ফেলা হয়েছে', 'fas fa-trash', 'var(--danger)');
+        }
+
+        function closeForm() { document.getElementById('formModal').classList.remove('active'); }
+        function closeFormIfBg(e) { if (e.target === e.currentTarget) closeForm(); }
+        function closeConfirm() { document.getElementById('confirmModal').classList.remove('active'); }
+
+        function previewFormImg() {
+            const url = document.getElementById('fImage').value.trim();
+            const prev = document.getElementById('fImgPreview');
+            const src = document.getElementById('fImgPrevSrc');
+            if (url) { src.src = url; prev.style.display = 'block'; } else { prev.style.display = 'none'; }
+        }
+
+        function saveToStorage() { localStorage.setItem('raisha_products', JSON.stringify(products)); }
+
+        // =============================================================
+        //  ছবি ডাউনলোড ও প্রিভিউ
+        // =============================================================
+        function downloadImage(url, id) {
+            showToast('ডাউনলোড হচ্ছে...', 'fas fa-spinner fa-spin', 'var(--pink)');
+            fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`)
+                .then(r => { if(!r.ok) throw 0; return r.blob(); })
+                .then(b => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(b); a.download = `RaishaZone-${id}.jpg`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    showToast('ছবি ডাউনলোড সম্পন্ন', 'fas fa-check-circle', 'var(--success)');
+                })
+                .catch(() => {
+                    window.open(url, '_blank');
+                    showToast('নতুন ট্যাবে ওপেন হয়েছে, সেভ করুন', 'fas fa-external-link-alt', '#3b82f6');
+                });
+        }
+
+        function openImgModal(url, name) {
+            currentModalImage = url;
+            document.getElementById('modalImage').src = url;
+            document.getElementById('modalImage').alt = name;
+            document.getElementById('imageModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImgModal(e) { if (e.target === e.currentTarget) closeImgModalDirect(); }
+        function closeImgModalDirect() { document.getElementById('imageModal').classList.remove('active'); document.body.style.overflow=''; currentModalImage=''; }
+        function downloadModalImg() { if (currentModalImage) downloadImage(currentModalImage, 'preview'); }
+
+        // =============================================================
+        //  হেল্পার
+        // =============================================================
+        function fmtPrice(n) { return '৳' + n.toLocaleString('bn-BD'); }
+        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+        function escAttr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+        function showToast(msg, icon, color) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerHTML = `<i class="${icon}" style="color:${color}"></i> ${msg}`;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+        }
+    </script>
+</body>
+</html>
