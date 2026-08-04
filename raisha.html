@@ -305,6 +305,22 @@
         .pass-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px; transition:color .2s; }
         .pass-toggle:hover { color:var(--text-secondary); }
 
+        /* লগআউট কনফার্ম */
+        .logout-confirm-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+            z-index:130; display:none; align-items:center; justify-content:center; padding:20px;
+        }
+        .logout-confirm-overlay.active { display:flex; }
+        .logout-confirm-box {
+            background:var(--bg-card); border:1px solid var(--border); border-radius:16px;
+            padding:32px; width:100%; max-width:360px; text-align:center; animation:mZoom .4s ease;
+        }
+        .logout-confirm-box .lc-icon { width:60px; height:60px; border-radius:50%; background:rgba(245,158,11,0.1); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:24px; color:#fbbf24; }
+        .logout-confirm-box h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+        .logout-confirm-box p { font-size:13px; color:var(--text-muted); margin-bottom:24px; line-height:1.5; }
+        .lc-actions { display:flex; gap:10px; }
+        .lc-actions button { flex:1; padding:12px; border-radius:8px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:all .2s ease; }
+
         @media(max-width:768px) {
             .header-inner,.controls-bar,.products-section { padding-left:16px; padding-right:16px; }
             .products-grid { grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
@@ -325,7 +341,7 @@
     <div class="bg-glow-2"></div>
 
     <!-- ============ লগইন স্ক্রিন ============ -->
-    <div class="login-screen" id="loginScreen">
+    <div class="login-screen hidden" id="loginScreen">
         <div class="login-box">
             <div class="login-logo">
                 <div class="brand-name"><span class="bp">Raisha</span> <span class="bz">Zone</span></div>
@@ -373,7 +389,7 @@
                         <i class="fas fa-shield-halved"></i>
                         <span id="roleText">মডারেটর</span>
                     </div>
-                    <button class="logout-btn" onclick="handleLogout()">
+                    <button class="logout-btn" onclick="showLogoutConfirm()">
                         <i class="fas fa-right-from-bracket"></i> লগআউট
                     </button>
                 </div>
@@ -453,7 +469,7 @@
         </div>
     </div>
 
-    <!-- ============ কনফার্ম মডাল ============ -->
+    <!-- ============ ডিলিট কনফার্ম মডাল ============ -->
     <div class="confirm-modal" id="confirmModal">
         <div class="confirm-box">
             <div class="icon-circle"><i class="fas fa-trash-can"></i></div>
@@ -466,11 +482,24 @@
         </div>
     </div>
 
+    <!-- ============ লগআউট কনফার্ম ============ -->
+    <div class="logout-confirm-overlay" id="logoutConfirm">
+        <div class="logout-confirm-box">
+            <div class="lc-icon"><i class="fas fa-right-from-bracket"></i></div>
+            <h3>লগআউট করবেন?</h3>
+            <p>লগআউট করলে পুনরায় পাসওয়ার্ড দিয়ে প্রবেশ করতে হবে</p>
+            <div class="lc-actions">
+                <button class="btn-cancel" onclick="hideLogoutConfirm()">না, থাকুন</button>
+                <button class="btn-confirm-del" onclick="handleLogout()"><i class="fas fa-right-from-bracket"></i> হ্যাঁ, লগআউট</button>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
         // =============================================================
-        //  কনফিগারেশন — শুধুমাত্র কোডে পাসওয়ার্ড আছে, পেজে দেখা যাবে না
+        //  কনফিগারেশন — পেজে দেখা যাবে না
         // =============================================================
         const ADMIN_PASSWORD = 'raisha2024';
         const MODERATOR_PASSWORD = 'mod1234';
@@ -505,15 +534,27 @@
         let currentModalImage = '';
 
         // =============================================================
-        //  ইনিশিয়ালাইজ
+        //  ইনিশিয়ালাইজ — সেশন চেক সহ
         // =============================================================
         document.addEventListener('DOMContentLoaded', () => {
+            // প্রোডাক্ট ডেটা লোড
             const saved = localStorage.getItem('raisha_products');
             if (saved) {
                 try { products = JSON.parse(saved); } catch(e) { products = [...DEFAULT_PRODUCTS]; }
             } else {
                 products = [...DEFAULT_PRODUCTS];
             }
+
+            // সেশন চেক — আগে থেকে লগইন আছে কিনা
+            const savedSession = localStorage.getItem('raisha_session');
+            if (savedSession === 'admin' || savedSession === 'moderator') {
+                currentUser = savedSession;
+                enterApp();
+                return; // লগইন স্ক্রিন দেখাবে না
+            }
+
+            // লগইন স্ক্রিন দেখাও
+            document.getElementById('loginScreen').classList.remove('hidden');
 
             document.getElementById('roleSelect').addEventListener('change', (e) => {
                 const label = document.getElementById('passLabel');
@@ -529,7 +570,7 @@
             document.getElementById('searchInput').addEventListener('input', handleSearch);
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') { closeImgModalDirect(); closeForm(); closeConfirm(); }
+                if (e.key === 'Escape') { closeImgModalDirect(); closeForm(); closeConfirm(); hideLogoutConfirm(); }
             });
 
             document.addEventListener('contextmenu', (e) => {
@@ -543,22 +584,17 @@
         });
 
         // =============================================================
-        //  পাসওয়ার্ড ভিজিবিলিটি টগল
+        //  পাসওয়ার্ড টগল
         // =============================================================
         function togglePassVis() {
             const input = document.getElementById('passInput');
             const icon = document.getElementById('passEyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fas fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fas fa-eye';
-            }
+            if (input.type === 'password') { input.type = 'text'; icon.className = 'fas fa-eye-slash'; }
+            else { input.type = 'password'; icon.className = 'fas fa-eye'; }
         }
 
         // =============================================================
-        //  লগইন / লগআউট
+        //  লগইন
         // =============================================================
         function handleLogin() {
             const role = document.getElementById('roleSelect').value;
@@ -570,27 +606,26 @@
                 return;
             }
 
-            if (role === 'admin') {
-                if (pass !== ADMIN_PASSWORD) {
-                    document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!';
-                    document.getElementById('loginError').style.display = 'block';
-                    document.getElementById('passInput').value = '';
-                    return;
-                }
-            } else {
-                if (pass !== MODERATOR_PASSWORD) {
-                    document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!';
-                    document.getElementById('loginError').style.display = 'block';
-                    document.getElementById('passInput').value = '';
-                    return;
-                }
+            const correctPass = role === 'admin' ? ADMIN_PASSWORD : MODERATOR_PASSWORD;
+            if (pass !== correctPass) {
+                document.getElementById('loginError').innerHTML = '<i class="fas fa-circle-exclamation"></i> পাসওয়ার্ড ভুল হয়েছে!';
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('passInput').value = '';
+                return;
             }
 
             document.getElementById('loginError').style.display = 'none';
             currentUser = role;
+
+            // সেশন সেভ — ব্রাউজার বন্ধ করলেও থাকবে
+            localStorage.setItem('raisha_session', role);
+
             enterApp();
         }
 
+        // =============================================================
+        //  অ্যাপে প্রবেশ
+        // =============================================================
         function enterApp() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').style.display = 'block';
@@ -616,7 +651,23 @@
             setTimeout(() => renderProducts(getSortedList(products)), 600);
         }
 
+        // =============================================================
+        //  লগআউট কনফার্ম + লগআউট
+        // =============================================================
+        function showLogoutConfirm() {
+            document.getElementById('logoutConfirm').classList.add('active');
+        }
+
+        function hideLogoutConfirm() {
+            document.getElementById('logoutConfirm').classList.remove('active');
+        }
+
         function handleLogout() {
+            hideLogoutConfirm();
+
+            // সেশন মুছে ফেলা — এবার ঢুকতে আবার পাসওয়ার্ড লাগবে
+            localStorage.removeItem('raisha_session');
+
             currentUser = null;
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').style.display = 'none';
@@ -627,6 +678,8 @@
             sortMode = 'none'; profitSortMode = 'none';
             document.getElementById('sortPrice').classList.remove('active');
             document.getElementById('sortProfit').classList.remove('active');
+
+            showToast('সফলভাবে লগআউট হয়েছে', 'fas fa-check-circle', 'var(--success)');
         }
 
         // =============================================================
